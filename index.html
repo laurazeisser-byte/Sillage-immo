@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototype Chatbot Juridique</title>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
+        #chat-container { width: 100%; max-width: 450px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; overflow: hidden; }
+        #chat-header { background: #4a6fa5; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 1.1em; }
+        #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafafa; }
+        .message { padding: 12px 16px; border-radius: 15px; max-width: 85%; line-height: 1.4; font-size: 14px; }
+        .bot-message { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .user-message { background: #4a6fa5; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        #options-container { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 30vh; }
+        button { padding: 12px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 14px; text-align: left; color: #333; }
+        button:hover { background: #f8f9fa; border-color: #4a6fa5; }
+    </style>
+</head>
+<body>
+
+    <div id="chat-container">
+        <div id="chat-header">🤖 Conseiller Juridique</div>
+        <div id="chat-box"></div>
+        <div id="options-container"></div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const optionsContainer = document.getElementById('options-container');
+
+        // Fonction pour ajouter un message dans la discussion
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
+            div.innerHTML = text.replace(/\n/g, '<br>'); // Remplace les retours à la ligne par des balises HTML
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight; // Fait défiler vers le bas automatiquement
+        }
+
+        // Fonction pour afficher les boutons de choix
+        function showOptions(options) {
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.innerHTML = opt.label;
+                btn.onclick = () => {
+                    addMessage(opt.label, 'user'); // Affiche le choix de l'utilisateur
+                    optionsContainer.innerHTML = ''; // Cache les boutons temporairement
+                    setTimeout(opt.action, 500); // Petite pause de 0.5s pour faire naturel
+                };
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // ETAPE 1 : L'accueil (La première fenêtre de ta carte mentale)
+        function etapeAccueil() {
+            addMessage("Bonjour ! Je suis votre conseiller juridique virtuel. Comment puis-je vous aider aujourd'hui ? Veuillez sélectionner votre profil :", 'bot');
+            showOptions([
+                { label: "🏠 Propriétaires bailleurs", action: etapeProprietaire },
+                { label: "🔑 Locataires", action: () => afficherBientot() },
+                { label: "🤝 Vendeurs", action: () => afficherBientot() },
+                { label: "🛒 Acheteurs", action: () => afficherBientot() },
+                { label: "📜 Succession / indivision", action: () => afficherBientot() }
+            ]);
+        }
+
+        // ETAPE 2 : Menu Propriétaire Bailleur
+        function etapeProprietaire() {
+            addMessage("Très bien. Quel est le problème que vous rencontrez avec votre locataire ?", 'bot');
+            showOptions([
+                { label: "💶 Les loyers et charges impayés", action: repLoyersImpayes },
+                { label: "💰 La restitution du dépôt de garantie", action: () => afficherBientot() },
+                { label: "🔨 La répartition des travaux", action: () => afficherBientot() },
+                { label: "⬅️ Revenir au début", action: etapeAccueil }
+            ]);
+        }
+
+        // ETAPE 3 : La réponse juridique (Loyers impayés)
+        function repLoyersImpayes() {
+            const reponse = `<b>⚖️ Ce que disent les textes de loi :</b>\n\n- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation principale de "payer le prix du bail aux termes convenus".\n- <b>Loi du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé "de payer le loyer et les charges récupérables aux termes convenus".\n\n<b>🛠 Les 3 étapes pour réagir :</b>\n1. La relance amiable (J+5)\n2. La mise en demeure par courrier recommandé (J+15)\n3. Le commandement de payer via un Commissaire de Justice.`;
+            
+            addMessage(reponse, 'bot');
+            
+            showOptions([
+                { label: "⬅️ Revenir au menu Propriétaire", action: etapeProprietaire },
+                { label: "🔄 Recommencer depuis le début", action: etapeAccueil }
+            ]);
+        }
+
+        // Message par défaut pour les sections pas encore écrites
+        function afficherBientot() {
+            addMessage("<i>Cette section est en cours de construction. Je pourrai bientôt vous aider sur ce sujet !</i>", 'bot');
+            showOptions([
+                { label: "⬅️ Revenir au début", action: etapeAccueil }
+            ]);
+        }
+
+        // Lancement du chatbot au chargement de la page
+        etapeAccueil();
+    </script>
+</body>
+</html>
