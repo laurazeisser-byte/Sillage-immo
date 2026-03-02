@@ -7,7 +7,7 @@
     
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        #chat-container { width: 100%; max-width: 450px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; overflow: hidden; }
+        #chat-container { width: 100%; max-width: 450px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 85vh; overflow: hidden; }
         #chat-header { background: #4a6fa5; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 1.1em; }
         #chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafafa; }
         .message { padding: 12px 16px; border-radius: 15px; max-width: 85%; line-height: 1.4; font-size: 14px; }
@@ -16,6 +16,13 @@
         #options-container { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 35vh; }
         button { padding: 12px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 14px; text-align: left; color: #333; }
         button:hover { background: #f8f9fa; border-color: #4a6fa5; }
+        
+        /* CSS spécifique pour le formulaire dans le chat */
+        .chat-form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .chat-form input { padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; }
+        .chat-form button.btn-envoyer { background-color: #4a6fa5; color: white; border: none; font-weight: bold; text-align: center; padding: 12px; border-radius: 5px; margin-top: 5px; cursor: pointer; transition: 0.2s;}
+        .chat-form button.btn-envoyer:hover { background-color: #385a8a; }
+        .chat-form button.btn-envoyer:disabled { background-color: #aaa; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -30,13 +37,18 @@
         const chatBox = document.getElementById('chat-box');
         const optionsContainer = document.getElementById('options-container');
         
-        // La phrase d'avertissement stockée pour pouvoir l'utiliser partout facilement
+        // La phrase d'avertissement stockée
         const disclaimer = "<br><br><i>* Avertissement : Je suis un assistant virtuel. Je ne suis ni juriste ni avocat. Ces informations sont données à titre indicatif et ne remplacent en aucun cas les conseils personnalisés d'un professionnel du droit.</i>";
 
         function addMessage(text, sender) {
             const div = document.createElement('div');
             div.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
-            div.innerHTML = text.replace(/\n/g, '<br>'); 
+            // On ne remplace pas les \n par <br> si le texte contient déjà du HTML (comme notre formulaire)
+            if (text.includes('<div') || text.includes('<br>')) {
+                div.innerHTML = text;
+            } else {
+                div.innerHTML = text.replace(/\n/g, '<br>'); 
+            }
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight; 
         }
@@ -67,7 +79,7 @@
             ]);
         }
 
-        // ETAPE 2 : Menu Propriétaire Bailleur (Mis à jour avec toutes tes suggestions)
+        // ETAPE 2 : Menu Propriétaire Bailleur
         function etapeProprietaire() {
             addMessage("Très bien. Quel est le problème que vous rencontrez avec votre locataire ?", 'bot');
             showOptions([
@@ -83,31 +95,75 @@
             ]);
         }
 
-        // REPONSE : Loyers impayés
+        // --- GESTION DU CONTACT ET DU FORMULAIRE ---
+
+        function proposerContact(actionRetour) {
+            addMessage("Souhaitez-vous être contacté gratuitement par un expert pour plus de détails sur votre situation ?", 'bot');
+            showOptions([
+                { label: "✅ Oui, je souhaite être contacté", action: () => afficherFormulaire(actionRetour) },
+                { label: "❌ Non, merci", action: () => afficherOptionsFin(actionRetour) }
+            ]);
+        }
+
+        function afficherFormulaire(actionRetour) {
+            const formHTML = `
+                Parfait, veuillez remplir ce formulaire et nous vous rappellerons :
+                <div class="chat-form">
+                    <input type="text" id="form-nom" placeholder="Nom">
+                    <input type="text" id="form-prenom" placeholder="Prénom">
+                    <input type="tel" id="form-tel" placeholder="Numéro de téléphone">
+                    <input type="email" id="form-email" placeholder="Adresse e-mail">
+                    <button class="btn-envoyer" id="btn-submit" onclick="validerFormulaire()">Envoyer ma demande</button>
+                </div>
+            `;
+            addMessage(formHTML, 'bot');
+            optionsContainer.innerHTML = ''; // On cache les boutons pendant qu'il remplit
+            
+            // On stocke l'action de retour pour la suite
+            window.actionRetourActuelle = actionRetour;
+        }
+
+        // Fonction globale appelée quand on clique sur "Envoyer" dans le formulaire
+        window.validerFormulaire = function() {
+            const btn = document.getElementById('btn-submit');
+            if(btn) { 
+                btn.disabled = true; 
+                btn.innerText = "Envoi en cours..."; 
+            }
+
+            addMessage("Voici mes coordonnées.", 'user');
+            
+            setTimeout(() => {
+                addMessage("✅ Merci ! Vos informations ont bien été enregistrées. Un conseiller vous contactera très prochainement.", 'bot');
+                afficherOptionsFin(window.actionRetourActuelle);
+            }, 1000);
+        }
+
+        function afficherOptionsFin(actionRetour) {
+            showOptions([
+                { label: "⬅️ Revenir au menu précédent", action: actionRetour },
+                { label: "🔄 Recommencer depuis le début", action: etapeAccueil }
+            ]);
+        }
+
+        // --- REPONSES JURIDIQUES ---
+
         function repLoyersImpayes() {
-            const texte = "<b>⚖️ Ce que disent les textes de loi :</b>\n\n- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation principale de \"payer le prix du bail aux termes convenus\".\n- <b>Loi du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé \"de payer le loyer et les charges récupérables aux termes convenus\".\n\n<b>🛠 Les 3 étapes pour réagir :</b>\n1. La relance amiable (J+5)\n2. La mise en demeure par courrier recommandé (J+15)\n3. Le commandement de payer via un Commissaire de Justice.";
-            
+            const texte = "<b>⚖️ Ce que disent les textes de loi :</b><br><br>- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation principale de \"payer le prix du bail aux termes convenus\".<br>- <b>Loi du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé \"de payer le loyer et les charges récupérables aux termes convenus\".<br><br><b>🛠 Les 3 étapes pour réagir :</b><br>1. La relance amiable (J+5)<br>2. La mise en demeure par courrier recommandé (J+15)<br>3. Le commandement de payer via un Commissaire de Justice.";
             addMessage(texte + disclaimer, 'bot');
             
-            showOptions([
-                { label: "⬅️ Revenir au menu Propriétaire", action: etapeProprietaire },
-                { label: "🔄 Recommencer depuis le début", action: etapeAccueil }
-            ]);
+            // On lance la proposition de contact après une petite pause
+            setTimeout(() => proposerContact(etapeProprietaire), 1000);
         }
 
-        // REPONSE : Dépôt de garantie
         function repDepotGarantie() {
-            const texte = "<b>⚖️ Ce que disent les textes de loi :</b>\n\nLa restitution du dépôt de garantie est strictement encadrée par l'<b>Article 22 de la loi du 6 juillet 1989</b>.\n\n<b>⏱ Les délais légaux de restitution :</b>\n- <b>1 mois maximum</b> à compter de la remise des clés si l'état des lieux de sortie est conforme à celui d'entrée.\n- <b>2 mois maximum</b> s'il y a des dégradations notées sur l'état des lieux de sortie.\n\n<b>⚠️ Attention aux retenues et pénalités :</b>\n- Si vous conservez une partie de la somme pour des travaux, vous devez <b>obligatoirement le justifier</b> (devis ou factures).\n- En cas de retard de restitution de votre part, la loi prévoit une pénalité au profit du locataire : une majoration de <b>10% du loyer mensuel hors charges pour chaque mois de retard</b> commencé.";
-            
+            const texte = "<b>⚖️ Ce que disent les textes de loi :</b><br><br>La restitution du dépôt de garantie est strictement encadrée par l'<b>Article 22 de la loi du 6 juillet 1989</b>.<br><br><b>⏱ Les délais légaux de restitution :</b><br>- <b>1 mois maximum</b> à compter de la remise des clés si l'état des lieux de sortie est conforme à celui d'entrée.<br>- <b>2 mois maximum</b> s'il y a des dégradations notées sur l'état des lieux de sortie.<br><br><b>⚠️ Attention aux retenues et pénalités :</b><br>- Si vous conservez une partie de la somme pour des travaux, vous devez <b>obligatoirement le justifier</b> (devis ou factures).<br>- En cas de retard de restitution de votre part, la loi prévoit une pénalité au profit du locataire : une majoration de <b>10% du loyer mensuel hors charges pour chaque mois de retard</b> commencé.";
             addMessage(texte + disclaimer, 'bot');
             
-            showOptions([
-                { label: "⬅️ Revenir au menu Propriétaire", action: etapeProprietaire },
-                { label: "🔄 Recommencer depuis le début", action: etapeAccueil }
-            ]);
+            // On lance la proposition de contact après une petite pause
+            setTimeout(() => proposerContact(etapeProprietaire), 1000);
         }
 
-        // Message par défaut pour les sections pas encore écrites
         function afficherBientot() {
             addMessage("<i>Cette section est en cours de construction. Je pourrai bientôt vous aider sur ce sujet !</i>", 'bot');
             showOptions([
@@ -115,7 +171,7 @@
             ]);
         }
 
-        // Lancement du chatbot
+        // Lancement du chatbot au chargement
         etapeAccueil();
     </script>
 </body>
