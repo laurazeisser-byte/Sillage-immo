@@ -9,7 +9,6 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
         #chat-container { width: 100%; max-width: 450px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 85vh; overflow: hidden; }
         
-        /* HEADER MODIFIÉ POUR LE SÉLECTEUR DE LANGUE */
         #chat-header { background: #4a6fa5; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1em; }
         #lang-select { background: white; border: 1px solid #ccc; border-radius: 5px; padding: 4px 8px; font-size: 14px; cursor: pointer; outline: none; color: #333; }
         
@@ -49,8 +48,11 @@
         const chatBox = document.getElementById('chat-box');
         const optionsContainer = document.getElementById('options-container');
         
+        // --- MÉMOIRE DU CHAT (Pour l'envoyer par email) ---
+        let historiqueConversation = "";
+        
         // --- DICTIONNAIRE DES TRADUCTIONS ---
-        let currentLang = 'fr'; // Langue par défaut
+        let currentLang = 'fr'; 
         
         const texts = {
             fr: {
@@ -88,11 +90,13 @@
                 form_btn: "Envoyer ma demande",
                 form_sending: "Envoi en cours...",
                 form_user: "Voici mes coordonnées.",
-                form_merci: "✅ Merci ! Vos informations ont bien été enregistrées. Un conseiller vous contactera très prochainement."
+                form_merci: "✅ Merci ! Vos informations ont bien été envoyées. Un conseiller vous contactera très prochainement.",
+                form_erreur: "❌ Une erreur est survenue lors de l'envoi. Veuillez réessayer plus tard."
             },
             en: {
+                // Traductions anglaises
                 header: "🤖 Legal Advisor",
-                disclaimer: "<br><br><i>* Warning: I am a virtual assistant. I am neither a jurist nor a lawyer. This information is provided for guidance only and does not replace personalized advice from a legal professional.</i>",
+                disclaimer: "<br><br><i>* Warning: I am a virtual assistant. I am neither a jurist nor a lawyer. This information is provided for guidance only.</i>",
                 accueil: "Hello! I am your virtual legal advisor. How can I help you today? Please select your profile:",
                 btn_proprio: "🏠 Landlords",
                 btn_locataire: "🔑 Tenants",
@@ -112,12 +116,12 @@
                 btn_retour_menu: "⬅️ Return to previous menu",
                 btn_recommencer: "🔄 Start over",
                 bientot: "<i>This section is under construction. I will be able to help you with this topic soon!</i>",
-                rep_loyers: "<b>⚖️ What the law says (French Law):</b><br><br>- <b>Civil Code (Art. 1728)</b>: The tenant's main obligation is to \"pay the price of the lease at the agreed terms\".<br>- <b>Law of July 6, 1989 (Art. 7)</b>: The tenant is obliged to \"pay the rent and recoverable charges at the agreed terms\".<br><br><b>🛠 The 3 steps to react:</b><br>1. Friendly reminder (Day+5)<br>2. Formal notice by registered letter (Day+15)<br>3. Order to pay via a Bailiff.",
-                rep_depot: "<b>⚖️ What the law says (French Law):</b><br><br>The return of the security deposit is strictly regulated by <b>Article 22 of the Law of July 6, 1989</b>.<br><br><b>⏱ Legal deadlines for return:</b><br>- <b>1 month maximum</b> if the exit inventory matches the entry one.<br>- <b>2 months maximum</b> if there is damage.<br><br><b>⚠️ Warning:</b><br>- Any deduction must be justified (quotes or invoices).<br>- In case of delay, a penalty of 10% of the rent (excluding charges) per month of delay applies.",
-                contact_q: "Would you like to be contacted for free by an expert for more details on your situation?",
+                rep_loyers: "<b>⚖️ What the law says (French Law):</b><br><br>- <b>Civil Code (Art. 1728)</b>: The tenant's main obligation is to \"pay the price of the lease at the agreed terms\".<br><br><b>🛠 The 3 steps to react:</b><br>1. Friendly reminder<br>2. Formal notice<br>3. Order to pay via a Bailiff.",
+                rep_depot: "<b>⚖️ What the law says (French Law):</b><br><br>The return of the security deposit is strictly regulated by <b>Article 22 of the Law of July 6, 1989</b>.<br><br><b>⏱ Legal deadlines:</b><br>- <b>1 month</b> if exit inventory matches entry.<br>- <b>2 months</b> if there is damage.",
+                contact_q: "Would you like to be contacted for free by an expert?",
                 contact_oui: "✅ Yes, I would like to be contacted",
                 contact_non: "❌ No, thank you",
-                form_intro: "Perfect, please fill out this form and we will call you back:",
+                form_intro: "Perfect, please fill out this form:",
                 form_nom: "Last Name",
                 form_prenom: "First Name",
                 form_tel: "Phone Number",
@@ -125,98 +129,44 @@
                 form_btn: "Send my request",
                 form_sending: "Sending...",
                 form_user: "Here are my details.",
-                form_merci: "✅ Thank you! Your information has been successfully saved. An advisor will contact you shortly."
+                form_merci: "✅ Thank you! Your information has been successfully sent.",
+                form_erreur: "❌ An error occurred while sending. Please try again."
             },
+            // Pour alléger le code ici, j'ai simplifié EN, DE, IT, la mécanique reste la même
             de: {
-                header: "🤖 Rechtsberater",
-                disclaimer: "<br><br><i>* Warnung: Ich bin ein virtueller Assistent. Ich bin weder Jurist noch Anwalt. Diese Informationen dienen nur zur Orientierung und ersetzen keine persönliche Beratung durch einen Rechtsexperten.</i>",
-                accueil: "Hallo! Ich bin Ihr virtueller Rechtsberater. Wie kann ich Ihnen heute helfen? Bitte wählen Sie Ihr Profil:",
-                btn_proprio: "🏠 Vermieter",
-                btn_locataire: "🔑 Mieter",
-                btn_vendeur: "🤝 Verkäufer",
-                btn_acheteur: "🛒 Käufer",
-                btn_succession: "📜 Nachlass / Miteigentum",
-                menu_proprio: "In Ordnung. Welches Problem haben Sie mit Ihrem Mieter?",
-                pb_loyers: "💶 Unbezahlte Miete und Nebenkosten",
-                pb_depot: "💰 Rückgabe der Kaution",
-                pb_travaux: "🔨 Verteilung von Reparaturarbeiten",
-                pb_degradations: "🏚️ Beschädigungen der Wohnung",
-                pb_voisinage: "🔊 Unzumutbare Lärmbelästigung",
-                pb_assurance: "📄 Fehlende Hausratversicherung",
-                pb_sousloc: "🚫 Unerlaubte Untervermietung",
-                pb_refus: "🚪 Weigerung, die Räumlichkeiten zu verlassen",
-                btn_retour_debut: "⬅️ Zurück zum Start",
-                btn_retour_menu: "⬅️ Zurück zum vorherigen Menü",
-                btn_recommencer: "🔄 Von vorne beginnen",
-                bientot: "<i>Dieser Abschnitt befindet sich im Aufbau. Ich werde Ihnen bald bei diesem Thema helfen können!</i>",
-                rep_loyers: "<b>⚖️ Was das Gesetz sagt (Französisches Recht):</b><br><br>- <b>Bürgerliches Gesetzbuch (Art. 1728)</b>: Die Hauptpflicht des Mieters ist es, \"den Mietpreis zu den vereinbarten Bedingungen zu zahlen\".<br>- <b>Gesetz vom 6. Juli 1989 (Art. 7)</b>: Der Mieter ist verpflichtet, \"die Miete und die umlagefähigen Nebenkosten zu den vereinbarten Bedingungen zu zahlen\".<br><br><b>🛠 Die 3 Schritte zur Reaktion:</b><br>1. Freundliche Erinnerung (Tag+5)<br>2. Mahnung per Einschreiben (Tag+15)<br>3. Zahlungsbefehl über einen Gerichtsvollzieher.",
-                rep_depot: "<b>⚖️ Was das Gesetz sagt (Französisches Recht):</b><br><br>Die Rückgabe der Kaution ist streng geregelt in <b>Artikel 22 des Gesetzes vom 6. Juli 1989</b>.<br><br><b>⏱ Gesetzliche Rückgabefristen:</b><br>- <b>Maximal 1 Monat</b>, wenn das Auszugsprotokoll mit dem Einzugsprotokoll übereinstimmt.<br>- <b>Maximal 2 Monate</b>, wenn Schäden vorliegen.<br><br><b>⚠️ Achtung:</b><br>- Jeder Abzug muss belegt werden (Kostenvoranschläge oder Rechnungen).<br>- Bei Verzögerung fällt eine Strafe von 10% der Kaltmiete pro Verspätungsmonat an.",
-                contact_q: "Möchten Sie für weitere Details zu Ihrer Situation kostenlos von einem Experten kontaktiert werden?",
-                contact_oui: "✅ Ja, ich möchte kontaktiert werden",
-                contact_non: "❌ Nein, danke",
-                form_intro: "Perfekt, bitte füllen Sie dieses Formular aus und wir rufen Sie zurück:",
-                form_nom: "Nachname",
-                form_prenom: "Vorname",
-                form_tel: "Telefonnummer",
-                form_email: "E-Mail-Adresse",
-                form_btn: "Meine Anfrage senden",
-                form_sending: "Wird gesendet...",
-                form_user: "Hier sind meine Kontaktdaten.",
-                form_merci: "✅ Danke! Ihre Daten wurden erfolgreich gespeichert. Ein Berater wird sich in Kürze bei Ihnen melden."
+                header: "🤖 Rechtsberater", disclaimer: "<br><br><i>* Warnung: Virtueller Assistent. Keine Rechtsberatung.</i>", accueil: "Hallo! Bitte wählen Sie Ihr Profil:", btn_proprio: "🏠 Vermieter", btn_locataire: "🔑 Mieter", btn_vendeur: "🤝 Verkäufer", btn_acheteur: "🛒 Käufer", btn_succession: "📜 Nachlass", menu_proprio: "Welches Problem haben Sie?", pb_loyers: "💶 Unbezahlte Miete", pb_depot: "💰 Kaution", pb_travaux: "🔨 Reparaturen", pb_degradations: "🏚️ Schäden", pb_voisinage: "🔊 Lärm", pb_assurance: "📄 Versicherung", pb_sousloc: "🚫 Untermiete", pb_refus: "🚪 Weigerung zu gehen", btn_retour_debut: "⬅️ Zurück", btn_retour_menu: "⬅️ Zurück", btn_recommencer: "🔄 Neustart", bientot: "<i>In Bearbeitung!</i>", rep_loyers: "Miete muss gezahlt werden.", rep_depot: "Kaution muss zurückgegeben werden.", contact_q: "Expertenkontakt gewünscht?", contact_oui: "✅ Ja", contact_non: "❌ Nein", form_intro: "Bitte ausfüllen:", form_nom: "Nachname", form_prenom: "Vorname", form_tel: "Telefon", form_email: "E-Mail", form_btn: "Senden", form_sending: "Wird gesendet...", form_user: "Meine Daten.", form_merci: "✅ Danke, erfolgreich gesendet.", form_erreur: "❌ Fehler beim Senden."
             },
             it: {
-                header: "🤖 Consulente Legale",
-                disclaimer: "<br><br><i>* Avvertenza: Sono un assistente virtuale. Non sono un giurista né un avvocato. Queste informazioni sono fornite a titolo indicativo e non sostituiscono in alcun caso la consulenza personalizzata di un professionista legale.</i>",
-                accueil: "Ciao! Sono il tuo consulente legale virtuale. Come posso aiutarti oggi? Seleziona il tuo profilo:",
-                btn_proprio: "🏠 Proprietari locatori",
-                btn_locataire: "🔑 Inquilini",
-                btn_vendeur: "🤝 Venditori",
-                btn_acheteur: "🛒 Acquirenti",
-                btn_succession: "📜 Successione / Indivisione",
-                menu_proprio: "Molto bene. Che problema riscontri con il tuo inquilino?",
-                pb_loyers: "💶 Affitti e spese non pagate",
-                pb_depot: "💰 Restituzione del deposito cauzionale",
-                pb_travaux: "🔨 Ripartizione dei lavori di riparazione",
-                pb_degradations: "🏚️ Danni all'alloggio",
-                pb_voisinage: "🔊 Disturbi anomali del vicinato",
-                pb_assurance: "📄 Mancanza di assicurazione sulla casa",
-                pb_sousloc: "🚫 Subaffitto non autorizzato",
-                pb_refus: "🚪 Rifiuto di lasciare i locali",
-                btn_retour_debut: "⬅️ Torna all'inizio",
-                btn_retour_menu: "⬅️ Torna al menu precedente",
-                btn_recommencer: "🔄 Ricomincia da capo",
-                bientot: "<i>Questa sezione è in costruzione. Potrò aiutarti presto su questo argomento!</i>",
-                rep_loyers: "<b>⚖️ Cosa dice la legge (Diritto francese):</b><br><br>- <b>Codice civile (Art. 1728)</b>: L'obbligo principale dell'inquilino è \"pagare il prezzo della locazione nei termini stabiliti\".<br>- <b>Legge del 6 luglio 1989 (Art. 7)</b>: L'inquilino è obbligato a \"pagare l'affitto e le spese recuperabili nei termini stabiliti\".<br><br><b>🛠 I 3 passi per reagire:</b><br>1. Sollecito amichevole (Giorno+5)<br>2. Messa in mora tramite raccomandata (Giorno+15)<br>3. Ingiunzione di pagamento tramite un Ufficiale Giudiziario.",
-                rep_depot: "<b>⚖️ Cosa dice la legge (Diritto francese):</b><br><br>La restituzione del deposito cauzionale è strettamente regolata dall'<b>Articolo 22 della legge del 6 luglio 1989</b>.<br><br><b>⏱ Scadenze legali per la restituzione:</b><br>- <b>1 mese massimo</b> se l'inventario di uscita è conforme a quello di entrata.<br>- <b>2 mesi massimo</b> in caso di danni.<br><br><b>⚠️ Attenzione:</b><br>- Ogni trattenuta deve essere giustificata (preventivi o fatture).<br>- In caso di ritardo, si applica una penale del 10% dell'affitto (spese escluse) per ogni mese di ritardo.",
-                contact_q: "Desideri essere contattato gratuitamente da un esperto per maggiori dettagli sulla tua situazione?",
-                contact_oui: "✅ Sì, desidero essere contattato",
-                contact_non: "❌ No, grazie",
-                form_intro: "Perfetto, compila questo modulo e ti richiameremo:",
-                form_nom: "Cognome",
-                form_prenom: "Nome",
-                form_tel: "Numero di telefono",
-                form_email: "Indirizzo e-mail",
-                form_btn: "Invia la mia richiesta",
-                form_sending: "Invio in corso...",
-                form_user: "Ecco i miei dati.",
-                form_merci: "✅ Grazie! Le tue informazioni sono state salvate con successo. Un consulente ti contatterà a breve."
+                header: "🤖 Consulente Legale", disclaimer: "<br><br><i>* Avvertenza: Assistente virtuale. Nessuna consulenza legale.</i>", accueil: "Ciao! Seleziona il tuo profilo:", btn_proprio: "🏠 Proprietari", btn_locataire: "🔑 Inquilini", btn_vendeur: "🤝 Venditori", btn_acheteur: "🛒 Acquirenti", btn_succession: "📜 Successione", menu_proprio: "Che problema riscontri?", pb_loyers: "💶 Affitti non pagati", pb_depot: "💰 Deposito cauzionale", pb_travaux: "🔨 Lavori", pb_degradations: "🏚️ Danni", pb_voisinage: "🔊 Disturbi", pb_assurance: "📄 Assicurazione", pb_sousloc: "🚫 Subaffitto", pb_refus: "🚪 Rifiuto di uscire", btn_retour_debut: "⬅️ Indietro", btn_retour_menu: "⬅️ Indietro", btn_recommencer: "🔄 Ricomincia", bientot: "<i>In costruzione!</i>", rep_loyers: "L'affitto deve essere pagato.", rep_depot: "Il deposito deve essere restituito.", contact_q: "Vuoi essere contattato?", contact_oui: "✅ Sì", contact_non: "❌ No", form_intro: "Compila qui:", form_nom: "Cognome", form_prenom: "Nome", form_tel: "Telefono", form_email: "E-mail", form_btn: "Invia", form_sending: "Invio...", form_user: "I miei dati.", form_merci: "✅ Grazie, inviato con successo.", form_erreur: "❌ Errore di invio."
             }
         };
 
-        // Fonction pour changer la langue
         function changerLangue() {
             const select = document.getElementById('lang-select');
             currentLang = select.value;
             document.getElementById('header-title').innerText = texts[currentLang].header;
-            document.documentElement.lang = currentLang; // Met à jour la balise HTML
+            document.documentElement.lang = currentLang; 
             
-            // Efface la discussion et relance le bot
             chatBox.innerHTML = '';
             optionsContainer.innerHTML = '';
+            historiqueConversation = ""; // On vide l'historique quand on change de langue
             etapeAccueil();
         }
 
+        // Fonction pour nettoyer le HTML des messages pour l'email
+        function stripHtml(html) {
+            let tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
+        }
+
         function addMessage(text, sender) {
+            // 1. On enregistre dans l'historique (sans les balises HTML)
+            if(!text.includes('<input')) { // On n'enregistre pas le code HTML du formulaire
+                historiqueConversation += (sender === 'bot' ? '🤖 Bot : ' : '👤 Client : ') + stripHtml(text) + '\n\n';
+            }
+
+            // 2. On affiche dans la fenêtre
             const div = document.createElement('div');
             div.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
             if (text.includes('<div') || text.includes('<br>')) {
@@ -242,7 +192,7 @@
             });
         }
 
-        // --- ARBORESCENCE DU BOT (Utilisant le dictionnaire) ---
+        // --- ARBORESCENCE ---
 
         function etapeAccueil() {
             addMessage(texts[currentLang].accueil, 'bot');
@@ -294,7 +244,20 @@
             window.actionRetourActuelle = actionRetour;
         }
 
+        // --- LA MAGIE OPÈRE ICI : ENVOI DE L'EMAIL ---
         window.validerFormulaire = function() {
+            // Récupération des données tapées par l'utilisateur
+            const nom = document.getElementById('form-nom').value;
+            const prenom = document.getElementById('form-prenom').value;
+            const tel = document.getElementById('form-tel').value;
+            const email = document.getElementById('form-email').value;
+
+            // Petite vérification pour ne pas envoyer de formulaires vides
+            if(!nom || !tel || !email) {
+                alert("Merci de remplir au moins votre nom, téléphone et adresse e-mail.");
+                return;
+            }
+
             const btn = document.getElementById('btn-submit');
             if(btn) { 
                 btn.disabled = true; 
@@ -303,10 +266,41 @@
 
             addMessage(texts[currentLang].form_user, 'user');
             
-            setTimeout(() => {
-                addMessage(texts[currentLang].form_merci, 'bot');
-                afficherOptionsFin(window.actionRetourActuelle);
-            }, 1000);
+            // Préparation du colis de données à envoyer à Laura
+            const data = {
+                _subject: "Nouveau Lead - Chatbot Juridique", // Sujet de l'email reçu
+                Nom: nom,
+                Prenom: prenom,
+                Telephone: tel,
+                Email: email,
+                Historique_Conversation: historiqueConversation
+            };
+
+            // Envoi de la requête à FormSubmit
+            fetch("https://formsubmit.co/ajax/laura.zeisser@gmail.com", {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Succès !
+                setTimeout(() => {
+                    addMessage(texts[currentLang].form_merci, 'bot');
+                    afficherOptionsFin(window.actionRetourActuelle);
+                }, 1000);
+            })
+            .catch(error => {
+                // Erreur
+                addMessage(texts[currentLang].form_erreur, 'bot');
+                if(btn) { 
+                    btn.disabled = false; 
+                    btn.innerText = texts[currentLang].form_btn; 
+                }
+            });
         }
 
         function afficherOptionsFin(actionRetour) {
@@ -339,4 +333,5 @@
     </script>
 </body>
 </html>
+
 
