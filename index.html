@@ -29,32 +29,33 @@
     <script>
         const chatBox = document.getElementById('chat-box');
         const optionsContainer = document.getElementById('options-container');
+        
+        // La phrase d'avertissement stockée pour pouvoir l'utiliser partout facilement
+        const disclaimer = "<br><br><i>* Avertissement : Je suis un assistant virtuel. Je ne suis ni juriste ni avocat. Ces informations sont données à titre indicatif et ne remplacent en aucun cas les conseils personnalisés d'un professionnel du droit.</i>";
 
-        // Fonction pour ajouter un message dans la discussion
         function addMessage(text, sender) {
             const div = document.createElement('div');
             div.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
-            div.innerHTML = text.replace(/\n/g, '<br>'); // Remplace les retours à la ligne par des balises HTML
+            div.innerHTML = text.replace(/\n/g, '<br>'); 
             chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight; // Fait défiler vers le bas automatiquement
+            chatBox.scrollTop = chatBox.scrollHeight; 
         }
 
-        // Fonction pour afficher les boutons de choix
         function showOptions(options) {
             optionsContainer.innerHTML = '';
             options.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.innerHTML = opt.label;
                 btn.onclick = () => {
-                    addMessage(opt.label, 'user'); // Affiche le choix de l'utilisateur
-                    optionsContainer.innerHTML = ''; // Cache les boutons temporairement
-                    setTimeout(opt.action, 500); // Petite pause de 0.5s pour faire naturel
+                    addMessage(opt.label, 'user'); 
+                    optionsContainer.innerHTML = ''; 
+                    setTimeout(opt.action, 500); 
                 };
                 optionsContainer.appendChild(btn);
             });
         }
 
-        // ETAPE 1 : L'accueil (La première fenêtre de ta carte mentale)
+        // ETAPE 1 : L'accueil
         function etapeAccueil() {
             addMessage("Bonjour ! Je suis votre conseiller juridique virtuel. Comment puis-je vous aider aujourd'hui ? Veuillez sélectionner votre profil :", 'bot');
             showOptions([
@@ -71,17 +72,29 @@
             addMessage("Très bien. Quel est le problème que vous rencontrez avec votre locataire ?", 'bot');
             showOptions([
                 { label: "💶 Les loyers et charges impayés", action: repLoyersImpayes },
-                { label: "💰 La restitution du dépôt de garantie", action: () => afficherBientot() },
+                { label: "💰 La restitution du dépôt de garantie", action: repDepotGarantie }, // NOUVEAU LIEN ICI
                 { label: "🔨 La répartition des travaux", action: () => afficherBientot() },
                 { label: "⬅️ Revenir au début", action: etapeAccueil }
             ]);
         }
 
-        // ETAPE 3 : La réponse juridique (Loyers impayés)
+        // REPONSE : Loyers impayés
         function repLoyersImpayes() {
-            const reponse = `<b>⚖️ Ce que disent les textes de loi :</b>\n\n- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation principale de "payer le prix du bail aux termes convenus".\n- <b>Loi du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé "de payer le loyer et les charges récupérables aux termes convenus".\n\n<b>🛠 Les 3 étapes pour réagir :</b>\n1. La relance amiable (J+5)\n2. La mise en demeure par courrier recommandé (J+15)\n3. Le commandement de payer via un Commissaire de Justice.`;
+            const texte = "<b>⚖️ Ce que disent les textes de loi :</b>\n\n- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation principale de \"payer le prix du bail aux termes convenus\".\n- <b>Loi du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé \"de payer le loyer et les charges récupérables aux termes convenus\".\n\n<b>🛠 Les 3 étapes pour réagir :</b>\n1. La relance amiable (J+5)\n2. La mise en demeure par courrier recommandé (J+15)\n3. Le commandement de payer via un Commissaire de Justice.";
             
-            addMessage(reponse, 'bot');
+            addMessage(texte + disclaimer, 'bot');
+            
+            showOptions([
+                { label: "⬅️ Revenir au menu Propriétaire", action: etapeProprietaire },
+                { label: "🔄 Recommencer depuis le début", action: etapeAccueil }
+            ]);
+        }
+
+        // NOUVELLE REPONSE : Dépôt de garantie
+        function repDepotGarantie() {
+            const texte = "<b>⚖️ Ce que disent les textes de loi :</b>\n\nLa restitution du dépôt de garantie est strictement encadrée par l'<b>Article 22 de la loi du 6 juillet 1989</b>.\n\n<b>⏱ Les délais légaux de restitution :</b>\n- <b>1 mois maximum</b> à compter de la remise des clés si l'état des lieux de sortie est conforme à celui d'entrée.\n- <b>2 mois maximum</b> s'il y a des dégradations notées sur l'état des lieux de sortie.\n\n<b>⚠️ Attention aux retenues et pénalités :</b>\n- Si vous conservez une partie de la somme pour des travaux, vous devez <b>obligatoirement le justifier</b> (devis ou factures).\n- En cas de retard de restitution de votre part, la loi prévoit une pénalité au profit du locataire : une majoration de <b>10% du loyer mensuel hors charges pour chaque mois de retard</b> commencé.";
+            
+            addMessage(texte + disclaimer, 'bot');
             
             showOptions([
                 { label: "⬅️ Revenir au menu Propriétaire", action: etapeProprietaire },
@@ -97,7 +110,7 @@
             ]);
         }
 
-        // Lancement du chatbot au chargement de la page
+        // Lancement du chatbot
         etapeAccueil();
     </script>
 </body>
