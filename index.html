@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prototype Chatbot Juridique Multilingue</title>
+    <title>Chatbot Juridique Avancé</title>
     
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
@@ -48,22 +48,17 @@
         const chatBox = document.getElementById('chat-box');
         const optionsContainer = document.getElementById('options-container');
         
-        // --- MÉMOIRE DU CHAT (Pour l'envoyer par email) ---
         let historiqueConversation = "";
-        
-        // --- DICTIONNAIRE DES TRADUCTIONS ---
         let currentLang = 'fr'; 
         
+        // --- DICTIONNAIRE MULTILINGUE COMPLET (Avec Code Civil & Loi de 1989) ---
         const texts = {
             fr: {
                 header: "🤖 Conseiller Juridique",
                 disclaimer: "<br><br><i>* Avertissement : Je suis un assistant virtuel. Je ne suis ni juriste ni avocat. Ces informations sont données à titre indicatif et ne remplacent en aucun cas les conseils personnalisés d'un professionnel du droit.</i>",
                 accueil: "Bonjour ! Je suis votre conseiller juridique virtuel. Comment puis-je vous aider aujourd'hui ? Veuillez sélectionner votre profil :",
                 btn_proprio: "🏠 Propriétaires bailleurs",
-                btn_locataire: "🔑 Locataires",
-                btn_vendeur: "🤝 Vendeurs",
-                btn_acheteur: "🛒 Acheteurs",
-                btn_succession: "📜 Succession / indivision",
+                btn_locataire: "🔑 Locataires", btn_vendeur: "🤝 Vendeurs", btn_acheteur: "🛒 Acheteurs", btn_succession: "📜 Succession / indivision",
                 menu_proprio: "Très bien. Quel est le problème que vous rencontrez avec votre locataire ?",
                 pb_loyers: "💶 Les loyers et charges impayés",
                 pb_depot: "💰 La restitution du dépôt de garantie",
@@ -73,71 +68,85 @@
                 pb_assurance: "📄 Le défaut d'assurance habitation",
                 pb_sousloc: "🚫 La sous-location non autorisée",
                 pb_refus: "🚪 Le refus de quitter les lieux",
-                btn_retour_debut: "⬅️ Revenir au début",
-                btn_retour_menu: "⬅️ Revenir au menu précédent",
-                btn_recommencer: "🔄 Recommencer depuis le début",
+                btn_retour_debut: "⬅️ Revenir au début", btn_retour_menu: "⬅️ Revenir au menu précédent", btn_recommencer: "🔄 Recommencer",
                 bientot: "<i>Cette section est en cours de construction. Je pourrai bientôt vous aider sur ce sujet !</i>",
-                rep_loyers: "<b>⚖️ Ce que disent les textes de loi :</b><br><br>- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation principale de \"payer le prix du bail aux termes convenus\".<br>- <b>Loi du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé \"de payer le loyer et les charges récupérables aux termes convenus\".<br><br><b>🛠 Les 3 étapes pour réagir :</b><br>1. La relance amiable (J+5)<br>2. La mise en demeure par courrier recommandé (J+15)<br>3. Le commandement de payer via un Commissaire de Justice.",
-                rep_depot: "<b>⚖️ Ce que disent les textes de loi :</b><br><br>La restitution du dépôt de garantie est strictement encadrée par l'<b>Article 22 de la loi du 6 juillet 1989</b>.<br><br><b>⏱ Les délais légaux de restitution :</b><br>- <b>1 mois maximum</b> si l'état des lieux de sortie est conforme.<br>- <b>2 mois maximum</b> s'il y a des dégradations.<br><br><b>⚠️ Attention :</b><br>- Toute retenue doit être justifiée (devis ou factures).<br>- En cas de retard, une pénalité de 10% du loyer hors charges par mois de retard s'applique.",
+                
+                rep_loyers: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Code civil (Art. 1728)</b> : Le locataire a pour obligation de payer le prix du bail aux termes convenus.<br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé de payer le loyer et les charges récupérables aux termes convenus.<br><b>🛠 Action :</b> Vous pouvez engager une procédure de mise en demeure puis un commandement de payer par huissier.",
+                rep_depot: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 22)</b> : Le dépôt de garantie doit être restitué dans un délai de 1 mois si l'état des lieux de sortie est conforme, ou de 2 mois en cas de dégradations. Toute retenue doit être justifiée. En cas de retard, une majoration de 10% du loyer mensuel hors charges s'applique par mois de retard.",
+                rep_travaux: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Code civil (Art. 1720) & Loi n°89-462 (Art. 6)</b> : Le propriétaire est tenu de faire toutes les réparations nécessaires au maintien en état et l'entretien normal des locaux (vétusté, grosses réparations).<br>- <b>Loi n°89-462 (Art. 7)</b> : Le locataire prend à sa charge l'entretien courant du logement et les menues réparations locatives.",
+                rep_degradations: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé de répondre des dégradations et pertes qui surviennent pendant la durée du contrat dans les locaux dont il a la jouissance exclusive, à moins qu'il ne prouve qu'elles ont eu lieu par cas de force majeure, par la faute du bailleur ou par le fait d'un tiers.",
+                rep_voisinage: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 7)</b> : Le locataire a l'obligation d'user paisiblement des locaux loués.<br>- <b>Article 6-1 (Loi 1989)</b> : Après mise en demeure, le bailleur est tenu d'utiliser les droits dont il dispose pour faire cesser les troubles de voisinage causés par son locataire.",
+                rep_assurance: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 7)</b> : Le locataire est obligé de s'assurer contre les risques dont il doit répondre en sa qualité de locataire et d'en justifier lors de la remise des clés puis chaque année. À défaut, le propriétaire peut résilier le bail ou souscrire une assurance pour le compte du locataire.",
+                rep_sousloc: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 8)</b> : Le locataire ne peut ni céder le contrat de location, ni sous-louer le logement sauf avec l'accord écrit du bailleur, y compris sur le montant du loyer. Le prix du loyer au mètre carré de surface habitable des locaux sous-loués ne peut excéder celui payé par le locataire principal.",
+                rep_refus: "<b>⚖️ Ce que disent les textes :</b><br>- <b>Loi n°89-462 du 6 juillet 1989 (Art. 15)</b> : À l'expiration du délai de préavis, le locataire est déchu de tout titre d'occupation sur les locaux loués. S'il se maintient dans les lieux (occupant sans droit ni titre), le propriétaire doit saisir le juge pour obtenir une ordonnance d'expulsion, exécutée par un huissier.",
+                
                 contact_q: "Souhaitez-vous être contacté gratuitement par un expert pour plus de détails sur votre situation ?",
-                contact_oui: "✅ Oui, je souhaite être contacté",
-                contact_non: "❌ Non, merci",
+                contact_oui: "✅ Oui, je souhaite être contacté", contact_non: "❌ Non, merci",
                 form_intro: "Parfait, veuillez remplir ce formulaire et nous vous rappellerons :",
-                form_nom: "Nom",
-                form_prenom: "Prénom",
-                form_tel: "Numéro de téléphone",
-                form_email: "Adresse e-mail",
-                form_btn: "Envoyer ma demande",
-                form_sending: "Envoi en cours...",
-                form_user: "Voici mes coordonnées.",
-                form_merci: "✅ Merci ! Vos informations ont bien été envoyées. Un conseiller vous contactera très prochainement.",
-                form_erreur: "❌ Une erreur est survenue lors de l'envoi. Veuillez réessayer plus tard."
+                form_nom: "Nom", form_prenom: "Prénom", form_tel: "Téléphone", form_email: "E-mail", form_btn: "Envoyer", form_sending: "Envoi...", form_user: "Voici mes coordonnées.", form_merci: "✅ Merci ! Vos informations ont été envoyées.", form_erreur: "❌ Erreur d'envoi. Réessayez."
             },
             en: {
-                // Traductions anglaises
                 header: "🤖 Legal Advisor",
-                disclaimer: "<br><br><i>* Warning: I am a virtual assistant. I am neither a jurist nor a lawyer. This information is provided for guidance only.</i>",
+                disclaimer: "<br><br><i>* Warning: I am a virtual assistant. I am neither a jurist nor a lawyer. This information is provided for guidance only and does not replace personalized advice from a legal professional.</i>",
                 accueil: "Hello! I am your virtual legal advisor. How can I help you today? Please select your profile:",
-                btn_proprio: "🏠 Landlords",
-                btn_locataire: "🔑 Tenants",
-                btn_vendeur: "🤝 Sellers",
-                btn_acheteur: "🛒 Buyers",
-                btn_succession: "📜 Estate / Undivided ownership",
+                btn_proprio: "🏠 Landlords", btn_locataire: "🔑 Tenants", btn_vendeur: "🤝 Sellers", btn_acheteur: "🛒 Buyers", btn_succession: "📜 Estate",
                 menu_proprio: "Alright. What problem are you facing with your tenant?",
-                pb_loyers: "💶 Unpaid rent and charges",
-                pb_depot: "💰 Security deposit return",
-                pb_travaux: "🔨 Distribution of repair works",
-                pb_degradations: "🏚️ Property damage",
-                pb_voisinage: "🔊 Abnormal neighborhood disturbances",
-                pb_assurance: "📄 Lack of home insurance",
-                pb_sousloc: "🚫 Unauthorized subletting",
-                pb_refus: "🚪 Refusal to leave the premises",
-                btn_retour_debut: "⬅️ Return to start",
-                btn_retour_menu: "⬅️ Return to previous menu",
-                btn_recommencer: "🔄 Start over",
-                bientot: "<i>This section is under construction. I will be able to help you with this topic soon!</i>",
-                rep_loyers: "<b>⚖️ What the law says (French Law):</b><br><br>- <b>Civil Code (Art. 1728)</b>: The tenant's main obligation is to \"pay the price of the lease at the agreed terms\".<br><br><b>🛠 The 3 steps to react:</b><br>1. Friendly reminder<br>2. Formal notice<br>3. Order to pay via a Bailiff.",
-                rep_depot: "<b>⚖️ What the law says (French Law):</b><br><br>The return of the security deposit is strictly regulated by <b>Article 22 of the Law of July 6, 1989</b>.<br><br><b>⏱ Legal deadlines:</b><br>- <b>1 month</b> if exit inventory matches entry.<br>- <b>2 months</b> if there is damage.",
+                pb_loyers: "💶 Unpaid rent", pb_depot: "💰 Security deposit", pb_travaux: "🔨 Repair works", pb_degradations: "🏚️ Property damage", pb_voisinage: "🔊 Neighborhood disturbances", pb_assurance: "📄 Lack of insurance", pb_sousloc: "🚫 Unauthorized subletting", pb_refus: "🚪 Refusal to leave",
+                btn_retour_debut: "⬅️ Return to start", btn_retour_menu: "⬅️ Return to menu", btn_recommencer: "🔄 Start over", bientot: "<i>Under construction!</i>",
+                
+                rep_loyers: "<b>⚖️ What the French Law says:</b><br>- <b>Civil Code (Art. 1728)</b>: The tenant must pay the rent at agreed terms.<br>- <b>Law of July 6, 1989 (Art. 7)</b>: The tenant must pay rent and recoverable charges. You can initiate a formal notice process via a bailiff.",
+                rep_depot: "<b>⚖️ What the French Law says:</b><br>- <b>Law of July 6, 1989 (Art. 22)</b>: Deposit must be returned within 1 month if exit inventory is clean, or 2 months if damaged. Deductions must be justified. A 10% penalty of the rent per month applies for delays.",
+                rep_travaux: "<b>⚖️ What the French Law says:</b><br>- <b>Civil Code (Art. 1720) & Law of 1989 (Art. 6)</b>: The landlord handles major repairs and obsolescence.<br>- <b>Law of 1989 (Art. 7)</b>: The tenant is responsible for routine maintenance and minor repairs.",
+                rep_degradations: "<b>⚖️ What the French Law says:</b><br>- <b>Law of July 6, 1989 (Art. 7)</b>: The tenant is liable for damages occurring during the lease unless proven to be caused by force majeure, the landlord, or a third party.",
+                rep_voisinage: "<b>⚖️ What the French Law says:</b><br>- <b>Law of July 6, 1989 (Art. 7 & 6-1)</b>: The tenant must use the premises peacefully. The landlord, after formal notice, must use their rights to stop neighborhood disturbances caused by the tenant.",
+                rep_assurance: "<b>⚖️ What the French Law says:</b><br>- <b>Law of July 6, 1989 (Art. 7)</b>: The tenant must insure against rental risks. Failing this, the landlord can terminate the lease or take out insurance on their behalf.",
+                rep_sousloc: "<b>⚖️ What the French Law says:</b><br>- <b>Law of July 6, 1989 (Art. 8)</b>: The tenant cannot sublet without the landlord's written agreement. Sublet rent cannot exceed the main rent.",
+                rep_refus: "<b>⚖️ What the French Law says:</b><br>- <b>Law of July 6, 1989 (Art. 15)</b>: At the end of the notice period, the tenant loses all occupation rights. If they remain, the landlord must apply to the court for an eviction order.",
+                
                 contact_q: "Would you like to be contacted for free by an expert?",
-                contact_oui: "✅ Yes, I would like to be contacted",
-                contact_non: "❌ No, thank you",
-                form_intro: "Perfect, please fill out this form:",
-                form_nom: "Last Name",
-                form_prenom: "First Name",
-                form_tel: "Phone Number",
-                form_email: "Email Address",
-                form_btn: "Send my request",
-                form_sending: "Sending...",
-                form_user: "Here are my details.",
-                form_merci: "✅ Thank you! Your information has been successfully sent.",
-                form_erreur: "❌ An error occurred while sending. Please try again."
+                contact_oui: "✅ Yes", contact_non: "❌ No", form_intro: "Please fill out this form:", form_nom: "Last Name", form_prenom: "First Name", form_tel: "Phone", form_email: "Email", form_btn: "Send", form_sending: "Sending...", form_user: "My details.", form_merci: "✅ Sent successfully.", form_erreur: "❌ Error."
             },
-            // Pour alléger le code ici, j'ai simplifié EN, DE, IT, la mécanique reste la même
             de: {
-                header: "🤖 Rechtsberater", disclaimer: "<br><br><i>* Warnung: Virtueller Assistent. Keine Rechtsberatung.</i>", accueil: "Hallo! Bitte wählen Sie Ihr Profil:", btn_proprio: "🏠 Vermieter", btn_locataire: "🔑 Mieter", btn_vendeur: "🤝 Verkäufer", btn_acheteur: "🛒 Käufer", btn_succession: "📜 Nachlass", menu_proprio: "Welches Problem haben Sie?", pb_loyers: "💶 Unbezahlte Miete", pb_depot: "💰 Kaution", pb_travaux: "🔨 Reparaturen", pb_degradations: "🏚️ Schäden", pb_voisinage: "🔊 Lärm", pb_assurance: "📄 Versicherung", pb_sousloc: "🚫 Untermiete", pb_refus: "🚪 Weigerung zu gehen", btn_retour_debut: "⬅️ Zurück", btn_retour_menu: "⬅️ Zurück", btn_recommencer: "🔄 Neustart", bientot: "<i>In Bearbeitung!</i>", rep_loyers: "Miete muss gezahlt werden.", rep_depot: "Kaution muss zurückgegeben werden.", contact_q: "Expertenkontakt gewünscht?", contact_oui: "✅ Ja", contact_non: "❌ Nein", form_intro: "Bitte ausfüllen:", form_nom: "Nachname", form_prenom: "Vorname", form_tel: "Telefon", form_email: "E-Mail", form_btn: "Senden", form_sending: "Wird gesendet...", form_user: "Meine Daten.", form_merci: "✅ Danke, erfolgreich gesendet.", form_erreur: "❌ Fehler beim Senden."
+                header: "🤖 Rechtsberater",
+                disclaimer: "<br><br><i>* Warnung: Ich bin ein virtueller Assistent. Ich bin weder Jurist noch Anwalt. Diese Informationen dienen nur zur Orientierung.</i>",
+                accueil: "Hallo! Bitte wählen Sie Ihr Profil:",
+                btn_proprio: "🏠 Vermieter", btn_locataire: "🔑 Mieter", btn_vendeur: "🤝 Verkäufer", btn_acheteur: "🛒 Käufer", btn_succession: "📜 Nachlass",
+                menu_proprio: "Welches Problem haben Sie mit Ihrem Mieter?",
+                pb_loyers: "💶 Unbezahlte Miete", pb_depot: "💰 Kaution", pb_travaux: "🔨 Reparaturarbeiten", pb_degradations: "🏚️ Schäden", pb_voisinage: "🔊 Lärmbelästigung", pb_assurance: "📄 Fehlende Versicherung", pb_sousloc: "🚫 Unerlaubte Untervermietung", pb_refus: "🚪 Weigerung zu gehen",
+                btn_retour_debut: "⬅️ Zurück zum Start", btn_retour_menu: "⬅️ Zurück", btn_recommencer: "🔄 Neustart", bientot: "<i>In Bearbeitung!</i>",
+                
+                rep_loyers: "<b>⚖️ Französisches Recht:</b><br>- <b>Code civil (Art. 1728) & Gesetz vom 6. Juli 1989 (Art. 7)</b>: Der Mieter muss Miete und Nebenkosten fristgerecht zahlen. Ein Mahnverfahren über einen Gerichtsvollzieher kann eingeleitet werden.",
+                rep_depot: "<b>⚖️ Französisches Recht:</b><br>- <b>Gesetz vom 6. Juli 1989 (Art. 22)</b>: Kaution muss innerhalb von 1 Monat (ohne Schäden) oder 2 Monaten (mit Schäden) zurückgezahlt werden. Bei Verzug droht eine Strafe von 10% der Kaltmiete pro Monat.",
+                rep_travaux: "<b>⚖️ Französisches Recht:</b><br>- <b>Code civil (Art. 1720) & Gesetz von 1989 (Art. 6)</b>: Der Vermieter trägt große Reparaturen.<br>- <b>Gesetz von 1989 (Art. 7)</b>: Der Mieter trägt laufende Instandhaltung.",
+                rep_degradations: "<b>⚖️ Französisches Recht:</b><br>- <b>Gesetz vom 6. Juli 1989 (Art. 7)</b>: Der Mieter haftet für Schäden während der Mietzeit, außer bei höherer Gewalt oder Fremdverschulden.",
+                rep_voisinage: "<b>⚖️ Französisches Recht:</b><br>- <b>Gesetz vom 6. Juli 1989 (Art. 7 & 6-1)</b>: Der Vermieter muss nach Abmahnung rechtliche Schritte einleiten, um Lärmbelästigungen durch seinen Mieter zu stoppen.",
+                rep_assurance: "<b>⚖️ Französisches Recht:</b><br>- <b>Gesetz vom 6. Juli 1989 (Art. 7)</b>: Der Mieter muss eine Hausratversicherung nachweisen. Sonst kann der Vermieter kündigen.",
+                rep_sousloc: "<b>⚖️ Französisches Recht:</b><br>- <b>Gesetz vom 6. Juli 1989 (Art. 8)</b>: Untervermietung erfordert die schriftliche Zustimmung des Vermieters.",
+                rep_refus: "<b>⚖️ Französisches Recht:</b><br>- <b>Gesetz vom 6. Juli 1989 (Art. 15)</b>: Nach Kündigung verliert der Mieter das Wohnrecht. Ein Räumungsverfahren muss gerichtlich eingeleitet werden.",
+                
+                contact_q: "Expertenkontakt gewünscht?",
+                contact_oui: "✅ Ja", contact_non: "❌ Nein", form_intro: "Bitte ausfüllen:", form_nom: "Nachname", form_prenom: "Vorname", form_tel: "Telefon", form_email: "E-Mail", form_btn: "Senden", form_sending: "Wird gesendet...", form_user: "Meine Daten.", form_merci: "✅ Erfolgreich gesendet.", form_erreur: "❌ Fehler."
             },
             it: {
-                header: "🤖 Consulente Legale", disclaimer: "<br><br><i>* Avvertenza: Assistente virtuale. Nessuna consulenza legale.</i>", accueil: "Ciao! Seleziona il tuo profilo:", btn_proprio: "🏠 Proprietari", btn_locataire: "🔑 Inquilini", btn_vendeur: "🤝 Venditori", btn_acheteur: "🛒 Acquirenti", btn_succession: "📜 Successione", menu_proprio: "Che problema riscontri?", pb_loyers: "💶 Affitti non pagati", pb_depot: "💰 Deposito cauzionale", pb_travaux: "🔨 Lavori", pb_degradations: "🏚️ Danni", pb_voisinage: "🔊 Disturbi", pb_assurance: "📄 Assicurazione", pb_sousloc: "🚫 Subaffitto", pb_refus: "🚪 Rifiuto di uscire", btn_retour_debut: "⬅️ Indietro", btn_retour_menu: "⬅️ Indietro", btn_recommencer: "🔄 Ricomincia", bientot: "<i>In costruzione!</i>", rep_loyers: "L'affitto deve essere pagato.", rep_depot: "Il deposito deve essere restituito.", contact_q: "Vuoi essere contattato?", contact_oui: "✅ Sì", contact_non: "❌ No", form_intro: "Compila qui:", form_nom: "Cognome", form_prenom: "Nome", form_tel: "Telefono", form_email: "E-mail", form_btn: "Invia", form_sending: "Invio...", form_user: "I miei dati.", form_merci: "✅ Grazie, inviato con successo.", form_erreur: "❌ Errore di invio."
+                header: "🤖 Consulente Legale",
+                disclaimer: "<br><br><i>* Avvertenza: Sono un assistente virtuale. Non sono un giurista. Queste informazioni sono fornite a titolo indicativo.</i>",
+                accueil: "Ciao! Seleziona il tuo profilo:",
+                btn_proprio: "🏠 Proprietari", btn_locataire: "🔑 Inquilini", btn_vendeur: "🤝 Venditori", btn_acheteur: "🛒 Acquirenti", btn_succession: "📜 Successione",
+                menu_proprio: "Che problema riscontri con il tuo inquilino?",
+                pb_loyers: "💶 Affitti non pagati", pb_depot: "💰 Deposito cauzionale", pb_travaux: "🔨 Ripartizione lavori", pb_degradations: "🏚️ Danni", pb_voisinage: "🔊 Disturbi vicinato", pb_assurance: "📄 Mancanza assicurazione", pb_sousloc: "🚫 Subaffitto non autorizzato", pb_refus: "🚪 Rifiuto di uscire",
+                btn_retour_debut: "⬅️ Torna all'inizio", btn_retour_menu: "⬅️ Indietro", btn_recommencer: "🔄 Ricomincia", bientot: "<i>In costruzione!</i>",
+                
+                rep_loyers: "<b>⚖️ Diritto Francese:</b><br>- <b>Codice civile (Art. 1728) & Legge del 6 luglio 1989 (Art. 7)</b>: L'inquilino deve pagare affitto e spese. Puoi avviare una procedura di ingiunzione tramite ufficiale giudiziario.",
+                rep_depot: "<b>⚖️ Diritto Francese:</b><br>- <b>Legge del 6 luglio 1989 (Art. 22)</b>: Restituzione in 1 mese (senza danni) o 2 mesi (con danni). Penale del 10% dell'affitto per ogni mese di ritardo.",
+                rep_travaux: "<b>⚖️ Diritto Francese:</b><br>- <b>Codice civile (Art. 1720) & Legge 1989 (Art. 6)</b>: Il locatore paga le grandi riparazioni.<br>- <b>Legge 1989 (Art. 7)</b>: L'inquilino paga la piccola manutenzione.",
+                rep_degradations: "<b>⚖️ Diritto Francese:</b><br>- <b>Legge del 6 luglio 1989 (Art. 7)</b>: L'inquilino è responsabile dei danni verificatisi, tranne in caso di forza maggiore.",
+                rep_voisinage: "<b>⚖️ Diritto Francese:</b><br>- <b>Legge del 6 luglio 1989 (Art. 7 & 6-1)</b>: Il locatore, previa diffida, deve far cessare i disturbi del vicinato causati dall'inquilino.",
+                rep_assurance: "<b>⚖️ Diritto Francese:</b><br>- <b>Legge del 6 luglio 1989 (Art. 7)</b>: L'inquilino deve assicurarsi. In mancanza, il locatore può rescindere il contratto.",
+                rep_sousloc: "<b>⚖️ Diritto Francese:</b><br>- <b>Legge del 6 luglio 1989 (Art. 8)</b>: Il subaffitto richiede il consenso scritto del locatore.",
+                rep_refus: "<b>⚖️ Diritto Francese:</b><br>- <b>Legge del 6 luglio 1989 (Art. 15)</b>: A fine preavviso, l'inquilino perde il diritto di abitare. Occorre avviare una procedura di sfratto giudiziale.",
+                
+                contact_q: "Vuoi essere contattato da un esperto?",
+                contact_oui: "✅ Sì", contact_non: "❌ No", form_intro: "Compila il modulo:", form_nom: "Cognome", form_prenom: "Nome", form_tel: "Telefono", form_email: "E-mail", form_btn: "Invia", form_sending: "Invio...", form_user: "I miei dati.", form_merci: "✅ Inviato con successo.", form_erreur: "❌ Errore."
             }
         };
 
@@ -149,11 +158,10 @@
             
             chatBox.innerHTML = '';
             optionsContainer.innerHTML = '';
-            historiqueConversation = ""; // On vide l'historique quand on change de langue
+            historiqueConversation = ""; 
             etapeAccueil();
         }
 
-        // Fonction pour nettoyer le HTML des messages pour l'email
         function stripHtml(html) {
             let tmp = document.createElement("DIV");
             tmp.innerHTML = html;
@@ -161,12 +169,10 @@
         }
 
         function addMessage(text, sender) {
-            // 1. On enregistre dans l'historique (sans les balises HTML)
-            if(!text.includes('<input')) { // On n'enregistre pas le code HTML du formulaire
+            if(!text.includes('<input')) { 
                 historiqueConversation += (sender === 'bot' ? '🤖 Bot : ' : '👤 Client : ') + stripHtml(text) + '\n\n';
             }
 
-            // 2. On affiche dans la fenêtre
             const div = document.createElement('div');
             div.className = 'message ' + (sender === 'bot' ? 'bot-message' : 'user-message');
             if (text.includes('<div') || text.includes('<br>')) {
@@ -193,7 +199,6 @@
         }
 
         // --- ARBORESCENCE ---
-
         function etapeAccueil() {
             addMessage(texts[currentLang].accueil, 'bot');
             showOptions([
@@ -210,16 +215,17 @@
             showOptions([
                 { label: texts[currentLang].pb_loyers, action: repLoyersImpayes },
                 { label: texts[currentLang].pb_depot, action: repDepotGarantie },
-                { label: texts[currentLang].pb_travaux, action: () => afficherBientot() },
-                { label: texts[currentLang].pb_degradations, action: () => afficherBientot() },
-                { label: texts[currentLang].pb_voisinage, action: () => afficherBientot() },
-                { label: texts[currentLang].pb_assurance, action: () => afficherBientot() },
-                { label: texts[currentLang].pb_sousloc, action: () => afficherBientot() },
-                { label: texts[currentLang].pb_refus, action: () => afficherBientot() },
+                { label: texts[currentLang].pb_travaux, action: repTravaux },
+                { label: texts[currentLang].pb_degradations, action: repDegradations },
+                { label: texts[currentLang].pb_voisinage, action: repVoisinage },
+                { label: texts[currentLang].pb_assurance, action: repAssurance },
+                { label: texts[currentLang].pb_sousloc, action: repSousloc },
+                { label: texts[currentLang].pb_refus, action: repRefus },
                 { label: texts[currentLang].btn_retour_debut, action: etapeAccueil }
             ]);
         }
 
+        // --- ENVOI FORMULAIRE ---
         function proposerContact(actionRetour) {
             addMessage(texts[currentLang].contact_q, 'bot');
             showOptions([
@@ -244,62 +250,43 @@
             window.actionRetourActuelle = actionRetour;
         }
 
-        // --- LA MAGIE OPÈRE ICI : ENVOI DE L'EMAIL ---
         window.validerFormulaire = function() {
-            // Récupération des données tapées par l'utilisateur
             const nom = document.getElementById('form-nom').value;
             const prenom = document.getElementById('form-prenom').value;
             const tel = document.getElementById('form-tel').value;
             const email = document.getElementById('form-email').value;
 
-            // Petite vérification pour ne pas envoyer de formulaires vides
             if(!nom || !tel || !email) {
                 alert("Merci de remplir au moins votre nom, téléphone et adresse e-mail.");
                 return;
             }
 
             const btn = document.getElementById('btn-submit');
-            if(btn) { 
-                btn.disabled = true; 
-                btn.innerText = texts[currentLang].form_sending; 
-            }
+            if(btn) { btn.disabled = true; btn.innerText = texts[currentLang].form_sending; }
 
             addMessage(texts[currentLang].form_user, 'user');
             
-            // Préparation du colis de données à envoyer à Laura
             const data = {
-                _subject: "Nouveau Lead - Chatbot Juridique", // Sujet de l'email reçu
-                Nom: nom,
-                Prenom: prenom,
-                Telephone: tel,
-                Email: email,
+                _subject: "Nouveau Lead - Chatbot Juridique",
+                Nom: nom, Prenom: prenom, Telephone: tel, Email: email,
                 Historique_Conversation: historiqueConversation
             };
 
-            // Envoi de la requête à FormSubmit
             fetch("https://formsubmit.co/ajax/laura.zeisser@gmail.com", {
                 method: "POST",
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(data)
             })
             .then(response => response.json())
             .then(data => {
-                // Succès !
                 setTimeout(() => {
                     addMessage(texts[currentLang].form_merci, 'bot');
                     afficherOptionsFin(window.actionRetourActuelle);
                 }, 1000);
             })
             .catch(error => {
-                // Erreur
                 addMessage(texts[currentLang].form_erreur, 'bot');
-                if(btn) { 
-                    btn.disabled = false; 
-                    btn.innerText = texts[currentLang].form_btn; 
-                }
+                if(btn) { btn.disabled = false; btn.innerText = texts[currentLang].form_btn; }
             });
         }
 
@@ -310,21 +297,19 @@
             ]);
         }
 
-        function repLoyersImpayes() {
-            addMessage(texts[currentLang].rep_loyers + texts[currentLang].disclaimer, 'bot');
-            setTimeout(() => proposerContact(etapeProprietaire), 1000);
-        }
-
-        function repDepotGarantie() {
-            addMessage(texts[currentLang].rep_depot + texts[currentLang].disclaimer, 'bot');
-            setTimeout(() => proposerContact(etapeProprietaire), 1000);
-        }
+        // --- REPONSES JURIDIQUES (Intégrées avec Code civil et Loi 1989) ---
+        function repLoyersImpayes() { addMessage(texts[currentLang].rep_loyers + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repDepotGarantie() { addMessage(texts[currentLang].rep_depot + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repTravaux() { addMessage(texts[currentLang].rep_travaux + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repDegradations() { addMessage(texts[currentLang].rep_degradations + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repVoisinage() { addMessage(texts[currentLang].rep_voisinage + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repAssurance() { addMessage(texts[currentLang].rep_assurance + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repSousloc() { addMessage(texts[currentLang].rep_sousloc + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
+        function repRefus() { addMessage(texts[currentLang].rep_refus + texts[currentLang].disclaimer, 'bot'); setTimeout(() => proposerContact(etapeProprietaire), 1000); }
 
         function afficherBientot() {
             addMessage(texts[currentLang].bientot, 'bot');
-            showOptions([
-                { label: texts[currentLang].btn_retour_debut, action: etapeAccueil }
-            ]);
+            showOptions([{ label: texts[currentLang].btn_retour_debut, action: etapeAccueil }]);
         }
 
         // Initialisation
